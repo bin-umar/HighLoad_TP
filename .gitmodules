@@ -1,6 +1,6 @@
 [submodule "libuv"]
 	path = libuv
-	url = https://github.com/libuv/libuv.git
+	url = https://github.com/libuv/libuv
 [submodule "http-parser"]
 	path = http-parser
-	url = https://github.com/nodejs/http-parser.git
+	url = https://github.com/nodejs/http-parser

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cassert>
 #include <cstring>
+#include <ctime>
+#include "Status.h"
 #include "uv.h"
 
 static uv_tcp_t server;
@@ -12,12 +14,75 @@ static uv_loop_t* uv_loop;
 
 using std::cout;
 using std::endl;
+using std::string;
 
-typedef struct {
-    uv_tcp_t handle;
-    uv_write_t write_req;
-    int request_num;
-} client_t;
+struct Request {
+    string data;
+    string method;
+    string uri;
+    string version;
+    string filename;
+};
+
+class Response {
+public:
+    Response() {
+        this->http_version = "1.1";
+        this->content_length = 0;
+        this->connection_type = "keep-alive";
+        this->server = "Ubuntu(Pop OS)/19.02";
+    };
+
+    void Status(int __st) {
+        this->status = std::to_string(__st);
+        this->phrase = status_phrase.at(__st);
+    };
+
+    void Send(int __fd, const string& __data) {
+        this->content_type = "text/plain";
+        this->content = __data;
+        this->content_length = __data.length();
+        this->date = Response::getCurrentDateGMT();
+        this->set_data();
+
+        int r = send(__fd, this->data.c_str(), this->get_size(), 0);
+        cout << "sending " << r << endl;
+    };
+
+private:
+    string data;
+    string http_version;
+    string content_type;
+    string date;
+    string server;
+    string connection_type;
+    string content;
+    string status;
+    string phrase;
+    size_t content_length;
+
+    static string getCurrentDateGMT() {
+        char buf[1000];
+        time_t now = time(nullptr);
+        struct tm tm = *gmtime(&now);
+        strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
+        return std::string(buf);
+    };
+
+    size_t get_size() {
+        return this->data.length();
+    };
+
+    void set_data() {
+        this->data = "HTTP/" + this->http_version + " " + this->status + " " + this->phrase + "\r\n";
+        this->data += "Server: " + this->server + "\r\n";
+        this->data += "Connection: " + this->connection_type + "\r\n";
+        this->data += "Date: " + this->date + "\r\n";
+        this->data += "Content-Length: " + std::to_string(this->content_length) + "\r\n";
+        this->data += "Content-Type: " + this->content_type + "; charset=UTF-8\r\n\r\n";
+        this->data += this->content;
+    };
+};
 
 void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf) {
     cout << "alloc_buffer " << suggested_size << endl;
@@ -25,30 +90,22 @@ void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf) {
     buf->len = suggested_size;
 }
 
-void on_close(uv_handle_t* handle) {
-    auto* client = (client_t*) handle->data;
+void on_close(uv_handle_t* client) {
     cout << client << "connection closed" << endl;
     delete client;
 }
 
 void on_read(uv_stream_t* client, ssize_t nread, const uv_buf_t* buf) {
     cout << "echo_read(stream=" << client->io_watcher.fd << "nread=" << nread << endl;
-//    extern ssize_t send (int __fd, const void *__buf, size_t __n, int __flags);
-    std::string hello = "HTTP/1.1 200 Ok \r\n";
-    hello += "Server: MLQ/0.1.2\r\n";
-    hello += "Connection: close\r\n";
-    hello += "Date: Fri, 13 Sep 2019 00:57:02 GMT\r\n";
-    hello += "Content-Length: 11\r\n";
-    hello += "Content-Type: text/plain; charset=UTF-8\r\n\r\n";
-    hello += "Hello world\n";
 
     if (nread < 0) {
         cout << "<EOF>" << endl;
         uv_close((uv_handle_t*) client, on_close);
     }
 
-    int r = send(client->io_watcher.fd,  hello.c_str(), hello.length(), 0);
-    cout << "sending " << r << endl;
+    Response response;
+    response.Status(200);
+    response.Send(client->io_watcher.fd, "Hello world\n");
     uv_close((uv_handle_t*) client, on_close);
 
     cout << buf->base << endl;

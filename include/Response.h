@@ -5,17 +5,9 @@
 #ifndef HIGHLOAD_TP_RESPONSE_H
 #define HIGHLOAD_TP_RESPONSE_H
 
-#include <iostream>
-#include <ctime>
-#include <cstring>
-#include <sys/socket.h>
-
-#include "../include/Status.h"
+#include "Status.h"
+#include "Config.h"
 #include "uv.h"
-
-using std::cout;
-using std::endl;
-using std::string;
 
 class Response {
 public:

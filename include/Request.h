@@ -5,13 +5,7 @@
 #ifndef HIGHLOAD_TP_REQUEST_H
 #define HIGHLOAD_TP_REQUEST_H
 
-#include <iostream>
-#include <cstring>
-#include <sstream>
-
-using std::cout;
-using std::endl;
-using std::string;
+#include "Config.h"
 
 class Request {
 public:

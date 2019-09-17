@@ -1,16 +1,5 @@
-#include <cassert>
-#include <sstream>
-
-#include "include/Status.h"
 #include "include/Response.h"
 #include "include/Request.h"
-
-static uv_tcp_t server;
-static uv_loop_t* uv_loop;
-
-#define DEFAULT_PORT  8000
-#define DEFAULT_BACKLOG 1024
-
 
 void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf) {
     cout << "alloc_buffer " << suggested_size << endl;
@@ -32,7 +21,6 @@ void on_read(uv_stream_t* client, ssize_t nread, const uv_buf_t* buf) {
         return;
     }
 
-//    cout << buf->base << endl;
     Request request;
     request.Parse(buf->base);
 
@@ -40,11 +28,6 @@ void on_read(uv_stream_t* client, ssize_t nread, const uv_buf_t* buf) {
     response.Status(200);
     response.Send(client->io_watcher.fd, "Hello world\n");
     uv_close((uv_handle_t*) client, on_close);
-//    char* token = strtok(buf->base, "\n");
-//    while(token != nullptr) {
-//        cout << "token = " << token << endl;
-//        token = strtok(nullptr, "\n");
-//    }
 
     delete[] buf->base;
 }

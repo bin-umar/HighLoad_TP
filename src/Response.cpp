@@ -16,15 +16,42 @@ void Response::Status(int __st) {
     this->phrase = status_phrase.at(__st);
 }
 
-void Response::Send(int __fd, const string& __data) {
-    this->content_type = "text/plain";
-    this->content = __data;
-    this->content_length = __data.length();
+void Response::Send(int __fd, const string& __filename) {
+    struct stat fileStat{};
+    if (stat(__filename.c_str(), &fileStat) < 0) {
+        std::cerr << "File " << __filename <<  " not found" << endl;
+        return;
+    }
+
+    for (const auto& type: mime_types) {
+        if (__filename.find(type.format) != std::string::npos) {
+            this->connection_type = type.mime;
+        }
+    }
+
+    this->content_length = (size_t)fileStat.st_size;
     this->date = Response::getCurrentDateGMT();
     this->set_data();
 
     int r = send(__fd, this->data.c_str(), this->get_size(), 0);
     cout << "sending " << r << endl;
+    this->SendFile(__fd, __filename);
+}
+
+void Response::SendFile(int __fd, const string& __filename) {
+    int file = open(__filename.c_str(), O_RDONLY);
+    int sentBytes = 0, remainData = this->content_length;
+    off_t offset = 0;
+    while ((sentBytes = sendfile(__fd, file, &offset, BUF_SIZE)) > 0) {
+        remainData -= sentBytes;
+    }
+
+    if (remainData != 0) {
+        std::cerr << "File " << __filename <<  " didn't send completely" << endl;
+        return;
+    }
+
+    close(file);
 }
 
 string Response::getCurrentDateGMT() {
@@ -46,5 +73,4 @@ void Response::set_data() {
     this->data += "Date: " + this->date + "\r\n";
     this->data += "Content-Length: " + std::to_string(this->content_length) + "\r\n";
     this->data += "Content-Type: " + this->content_type + "; charset=UTF-8\r\n\r\n";
-    this->data += this->content;
 }

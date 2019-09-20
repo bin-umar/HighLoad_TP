@@ -16,7 +16,6 @@ public:
     void Send(int __fd, const string& __data);
 
 private:
-    string content;
     string content_type;
     string connection_type;
     size_t content_length;
@@ -30,6 +29,7 @@ private:
     static string getCurrentDateGMT();
     size_t get_size();
     void set_data();
+    void SendFile(int __fd, const string& __filename);
 };
 
 #endif //HIGHLOAD_TP_RESPONSE_H

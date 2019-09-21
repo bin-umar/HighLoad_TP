@@ -30,7 +30,7 @@ private:
     void set_accept(string&);
     void set_referer(string&);
 
-    bool CheckHeader(string&, string);
+    bool CheckHeader(const string&, const string&);
 };
 
 #endif //HIGHLOAD_TP_REQUEST_H

@@ -62,6 +62,6 @@ void Request::set_referer(string& __token) {
     cout << "referer = " << referer << endl;
 }
 
-bool Request::CheckHeader(string& __token, string __header) {
+bool Request::CheckHeader(const string& __token, const string& __header) {
     return __token.find(__header) != string::npos;
 }

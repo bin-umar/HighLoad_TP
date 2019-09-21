@@ -4,7 +4,7 @@
 
 #include "../include/Response.h"
 
-Response::Response() {
+Response::Response(int __fd): fd(__fd) {
     http_version = "1.1";
     content_length = 0;
     connection_type = "keep-alive";
@@ -16,7 +16,7 @@ void Response::Status(int __st) {
     phrase = status_phrase.at(__st);
 }
 
-void Response::Send(int __fd, const string& __filename) {
+void Response::SendHeaders(const string& __filename) {
     struct stat fileStat{};
     if (stat(__filename.c_str(), &fileStat) < 0) {
         std::cerr << "File " << __filename <<  " not found" << endl;
@@ -25,7 +25,7 @@ void Response::Send(int __fd, const string& __filename) {
 
     for (const auto& type: mime_types) {
         if (__filename.find(type.format) != std::string::npos) {
-            connection_type = type.mime;
+            content_type = type.mime;
         }
     }
 
@@ -33,16 +33,15 @@ void Response::Send(int __fd, const string& __filename) {
     date = Response::getCurrentDateGMT();
     set_data();
 
-    int r = send(__fd, data.c_str(), get_size(), 0);
+    int r = send(fd, data.c_str(), get_size(), 0);
     cout << "sending " << r << endl;
-    SendFile(__fd, __filename);
 }
 
-void Response::SendFile(int __fd, const string& __filename) {
+void Response::SendFile(const string& __filename) {
     int file = open(__filename.c_str(), O_RDONLY);
     int sentBytes = 0, remainData = content_length;
     off_t offset = 0;
-    while ((sentBytes = sendfile(__fd, file, &offset, BUF_SIZE)) > 0) {
+    while ((sentBytes = sendfile(fd, file, &offset, BUF_SIZE)) > 0) {
         remainData -= sentBytes;
     }
 
@@ -67,10 +66,10 @@ size_t Response::get_size() {
 }
 
 void Response::set_data() {
-    data = "HTTP/" + http_version + " " + status + " " + phrase + "\r\n";
-    data += "Server: " + server + "\r\n";
-    data += "Connection: " + connection_type + "\r\n";
-    data += "Date: " + date + "\r\n";
-    data += "Content-Length: " + std::to_string(content_length) + "\r\n";
-    data += "Content-Type: " + content_type + "; charset=UTF-8\r\n\r\n";
+    data =  "HTTP/" + http_version + " " + status + " " + phrase + CRLF;
+    data += "Server: " + server + CRLF;
+    data += "Connection: " + connection_type + CRLF;
+    data += "Date: " + date + CRLF;
+    data += "Content-Length: " + std::to_string(content_length) + CRLF;
+    data += "Content-Type: " + content_type + "; charset=UTF-8" + CRLF + CRLF;
 }

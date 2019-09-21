@@ -6,6 +6,7 @@
 #define HIGHLOAD_TP_REQUEST_H
 
 #include "Config.h"
+#include "Status.h"
 
 class Request {
 public:

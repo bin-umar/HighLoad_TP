@@ -11,9 +11,10 @@
 
 class Response {
 public:
-    Response();
+    explicit Response(int __fd);
     void Status(int __st);
-    void Send(int __fd, const string& __data);
+    void SendHeaders(const string& __filename);
+    void SendFile(const string& __filename);
 
 private:
     string content_type;
@@ -25,11 +26,11 @@ private:
     string phrase;
     string server;
     string status;
+    int fd;
 
     static string getCurrentDateGMT();
     size_t get_size();
     void set_data();
-    void SendFile(int __fd, const string& __filename);
 };
 
 #endif //HIGHLOAD_TP_RESPONSE_H

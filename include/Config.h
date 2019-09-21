@@ -26,6 +26,7 @@ static uv_loop_t* uv_loop;
 #define DEFAULT_PORT  8000
 #define DEFAULT_BACKLOG 1024
 #define BUF_SIZE 32
+#define CRLF "\r\n"
 
 struct types {
     const std::string format;

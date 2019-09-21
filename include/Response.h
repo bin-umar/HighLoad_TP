@@ -13,13 +13,15 @@ class Response {
 public:
     explicit Response(int __fd);
     void Status(int __st);
-    void SendHeaders(const string& __filename);
+    void SendHeaders();
     void SendFile(const string& __filename);
 
-private:
     string content_type;
-    string connection_type;
     size_t content_length;
+
+private:
+    string content;
+    string connection_type;
     string date;
     string data;
     string http_version;

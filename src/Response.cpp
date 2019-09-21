@@ -9,27 +9,21 @@ Response::Response(int __fd): fd(__fd) {
     content_length = 0;
     connection_type = "keep-alive";
     server = "Ubuntu(Pop OS)/19.02";
+    content = "";
 }
 
 void Response::Status(int __st) {
     status = std::to_string(__st);
     phrase = status_phrase.at(__st);
+
+    if (__st != HTTP_STATUS_OK) {
+        content_type = "text/plain";
+        content = status + " " + phrase;
+        content_length = content.length();
+    }
 }
 
-void Response::SendHeaders(const string& __filename) {
-    struct stat fileStat{};
-    if (stat(__filename.c_str(), &fileStat) < 0) {
-        std::cerr << "File " << __filename <<  " not found" << endl;
-        return;
-    }
-
-    for (const auto& type: mime_types) {
-        if (__filename.find(type.format) != std::string::npos) {
-            content_type = type.mime;
-        }
-    }
-
-    content_length = (size_t)fileStat.st_size;
+void Response::SendHeaders() {
     date = Response::getCurrentDateGMT();
     set_data();
 
@@ -72,4 +66,5 @@ void Response::set_data() {
     data += "Date: " + date + CRLF;
     data += "Content-Length: " + std::to_string(content_length) + CRLF;
     data += "Content-Type: " + content_type + "; charset=UTF-8" + CRLF + CRLF;
+    data += content;
 }

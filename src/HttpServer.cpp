@@ -19,7 +19,7 @@ void http_server::HttpServer::ParseRequest(char * __request_string) {
 void http_server::HttpServer::SendResponse() {
     int status = GetStatus();
     response->Status(status);
-    response->SendHeaders(request.filename);
+    response->SendHeaders();
 
     if (status == HTTP_STATUS_OK) {
         response->SendFile(request.filename);
@@ -31,13 +31,25 @@ int http_server::HttpServer::GetStatus() {
         return HTTP_STATUS_METHOD_NOT_ALLOWED;
     }
 
-    if (request.uri[request.uri.length()-1] == '/') {
+    struct stat fileStat{};
+    if (request.uri[request.uri.length() - 1] == '/') {
         if (request.uri.find('.') == std::string::npos) {
             request.filename += "index.html";
-            struct stat isExist{};
-            if (stat(request.filename.c_str(), &isExist) < 0) {
+            if (stat(request.filename.c_str(), &fileStat) < 0) {
                 return HTTP_STATUS_FORBIDDEN;
             }
+        }
+    }
+
+    if (stat(request.filename.c_str(), &fileStat) < 0) {
+        std::cerr << "File " << request.filename <<  " not found" << endl;
+        return HTTP_STATUS_NOT_FOUND;
+    }
+
+    for (const auto& type: mime_types) {
+        if (request.filename.find(type.format) != std::string::npos) {
+            response->content_type = type.mime;
+            response->content_length = (size_t)fileStat.st_size;
         }
     }
 

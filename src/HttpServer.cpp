@@ -41,6 +41,10 @@ int http_server::HttpServer::GetStatus() {
         }
     }
 
+    if (request.filename.find("/..") != std::string::npos) {
+        return HTTP_STATUS_FORBIDDEN;
+    }
+
     if (stat(request.filename.c_str(), &fileStat) < 0) {
         std::cerr << "File " << request.filename <<  " not found" << endl;
         return HTTP_STATUS_NOT_FOUND;

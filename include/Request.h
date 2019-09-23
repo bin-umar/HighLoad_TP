@@ -21,7 +21,8 @@ public:
     string filename;
 
     Request();
-    void Parse(char *);
+    void ParseHttpQuery(char *);
+    void ParseUri(char *, char *, size_t);
 
 private:
     void set_hostname(string&);

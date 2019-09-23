@@ -65,6 +65,6 @@ void Response::set_data() {
     data += "Connection: " + connection_type + CRLF;
     data += "Date: " + date + CRLF;
     data += "Content-Length: " + std::to_string(content_length) + CRLF;
-    data += "Content-Type: " + content_type + "; charset=UTF-8" + CRLF + CRLF;
+    data += "Content-Type: " + content_type + CRLF + CRLF;
     data += content;
 }

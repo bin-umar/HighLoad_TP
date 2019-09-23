@@ -13,7 +13,7 @@ http_server::HttpServer::~HttpServer() {
 }
 
 void http_server::HttpServer::ParseRequest(char * __request_string) {
-    request.Parse(__request_string);
+    request.ParseHttpQuery(__request_string);
 }
 
 void http_server::HttpServer::SendResponse() {
@@ -21,12 +21,16 @@ void http_server::HttpServer::SendResponse() {
     response->Status(status);
     response->SendHeaders();
 
-    if (status == HTTP_STATUS_OK) {
+    if (status == HTTP_STATUS_OK && request.method == "GET") {
         response->SendFile(request.filename);
     }
 }
 
 int http_server::HttpServer::GetStatus() {
+    if (request.method.empty() || request.uri.empty() || request.http_version.empty()) {
+        return HTTP_STATUS_METHOD_NOT_ALLOWED;
+    }
+
     if (request.method != "GET" && request.method != "HEAD") {
         return HTTP_STATUS_METHOD_NOT_ALLOWED;
     }

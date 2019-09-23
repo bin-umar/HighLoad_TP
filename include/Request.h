@@ -20,7 +20,7 @@ public:
     string referer;
     string filename;
 
-    Request();
+    Request(string __root);
     void ParseHttpQuery(char *);
     void ParseUri(char *, char *, size_t);
 

@@ -24,15 +24,20 @@ namespace http_server {
 
     class HttpServer {
     public:
-        explicit HttpServer(int __fd);
-        void ParseRequest(char *);
-        void SendResponse();
+        explicit HttpServer(int __fd, const string& __root);
+        HttpServer(const HttpServer&) = delete;
+        HttpServer(HttpServer&&) = delete;
         ~HttpServer();
 
+        HttpServer& operator=(const HttpServer&) = delete;
+        HttpServer& operator=(HttpServer&&) = delete;
+
+        void ParseRequest(char *);
+        void SendResponse();
+
     private:
-        Request request;
+        Request* request;
         Response* response;
-        int fd;
         int GetStatus();
     };
 }

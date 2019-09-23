@@ -4,7 +4,7 @@
 
 #include "../include/Request.h"
 
-Request::Request() = default;
+Request::Request(string __root): filename(__root) {}
 
 void Request::ParseHttpQuery(char* __str) {
     string __token;
@@ -29,7 +29,7 @@ void Request::ParseHttpQuery(char* __str) {
 
     uri = uri.substr(0, uri.find('?'));
     http_version = http_version.substr(5);
-    filename = "http-test-suite" + uri;
+    filename += uri;
 
     cout << "method = " << method << endl;
     cout << "uri = " << uri << endl;

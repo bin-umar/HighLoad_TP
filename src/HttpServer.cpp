@@ -4,16 +4,19 @@
 
 #include "../include/HttpServer.h"
 
-http_server::HttpServer::HttpServer(int __fd): fd(__fd) {
+/****************************** Http Server ***********************************/
+http_server::HttpServer::HttpServer(int __fd, const string& __root) {
+    request = new Request(__root);
     response = new Response(__fd);
-};
+}
 
 http_server::HttpServer::~HttpServer() {
+    delete request;
     delete response;
 }
 
 void http_server::HttpServer::ParseRequest(char * __request_string) {
-    request.ParseHttpQuery(__request_string);
+    request->ParseHttpQuery(__request_string);
 }
 
 void http_server::HttpServer::SendResponse() {
@@ -21,41 +24,41 @@ void http_server::HttpServer::SendResponse() {
     response->Status(status);
     response->SendHeaders();
 
-    if (status == HTTP_STATUS_OK && request.method == "GET") {
-        response->SendFile(request.filename);
+    if (status == HTTP_STATUS_OK && request->method == "GET") {
+        response->SendFile(request->filename);
     }
 }
 
 int http_server::HttpServer::GetStatus() {
-    if (request.method.empty() || request.uri.empty() || request.http_version.empty()) {
+    if (request->method.empty() || request->uri.empty() || request->http_version.empty()) {
         return HTTP_STATUS_METHOD_NOT_ALLOWED;
     }
 
-    if (request.method != "GET" && request.method != "HEAD") {
+    if (request->method != "GET" && request->method != "HEAD") {
         return HTTP_STATUS_METHOD_NOT_ALLOWED;
     }
 
     struct stat fileStat{};
-    if (request.uri[request.uri.length() - 1] == '/') {
-        if (request.uri.find('.') == std::string::npos) {
-            request.filename += "index.html";
-            if (stat(request.filename.c_str(), &fileStat) < 0) {
+    if (request->uri[request->uri.length() - 1] == '/') {
+        if (request->uri.find('.') == string::npos) {
+            request->filename += "index.html";
+            if (stat(request->filename.c_str(), &fileStat) < 0) {
                 return HTTP_STATUS_FORBIDDEN;
             }
         }
     }
 
-    if (request.filename.find("/..") != std::string::npos) {
+    if (request->filename.find("/..") != string::npos) {
         return HTTP_STATUS_FORBIDDEN;
     }
 
-    if (stat(request.filename.c_str(), &fileStat) < 0) {
-        std::cerr << "File " << request.filename <<  " not found" << endl;
+    if (stat(request->filename.c_str(), &fileStat) < 0) {
+        std::cerr << "File " << request->filename <<  " not found" << endl;
         return HTTP_STATUS_NOT_FOUND;
     }
 
     for (const auto& type: mime_types) {
-        if (request.filename.find(type.format) != std::string::npos) {
+        if (request->filename.find(type.format) != string::npos) {
             response->content_type = type.mime;
             response->content_length = (size_t)fileStat.st_size;
         }
@@ -64,6 +67,21 @@ int http_server::HttpServer::GetStatus() {
     return HTTP_STATUS_OK;
 }
 
+/************************************* Server *************************************/
+http_server::Server::Server(const string& ip, unsigned short port) {
+    uv_loop = uv_default_loop();
+    assert(uv_tcp_init(uv_loop, &server) == 0);
+
+    struct sockaddr_in addr{};
+    assert(uv_ip4_addr(ip.c_str(), port, &addr) == 0);
+    assert(uv_tcp_bind(&server, (const struct sockaddr*) &addr, 0) == 0);
+
+    uv_listen((uv_stream_t*) &server, DEFAULT_BACKLOG, http_server::OnConnect);
+    cout << "server started listening on port " << port << endl;
+    uv_run(uv_loop, UV_RUN_DEFAULT);
+}
+
+/***************************** CallBack Functions **********************************/
 void http_server::OnClose(uv_handle_t *__client) {
     cout << __client << "connection closed" << endl;
     delete __client;
@@ -77,7 +95,7 @@ void http_server::OnAlloc(uv_handle_t *client, size_t __suggested_size, uv_buf_t
 }
 
 void http_server::OnRead(uv_stream_t *__client, ssize_t __n_read, const uv_buf_t *__buf) {
-    cout << "echo_read(stream=" << __client->io_watcher.fd << "__n_read=" << __n_read << endl;
+    cout << "echo_read(stream = " << __client->io_watcher.fd << "__n_read=" << __n_read << endl;
     if (__n_read < 0) {
         cout << "<EOF>" << endl;
         uv_close((uv_handle_t*) __client, nullptr);
@@ -85,7 +103,7 @@ void http_server::OnRead(uv_stream_t *__client, ssize_t __n_read, const uv_buf_t
         return;
     }
 
-    HttpServer http_server(__client->io_watcher.fd);
+    HttpServer http_server(__client->io_watcher.fd, "http-test-suite");
     http_server.ParseRequest(__buf->base);
     http_server.SendResponse();
 
@@ -106,17 +124,4 @@ void http_server::OnConnect(uv_stream_t *server_handle, int status) {
     }
 
     uv_read_start((uv_stream_t*) client, http_server::OnAlloc, http_server::OnRead);
-}
-
-http_server::Server::Server(const string& ip, unsigned short port) {
-    uv_loop = uv_default_loop();
-    assert(uv_tcp_init(uv_loop, &server) == 0);
-
-    struct sockaddr_in addr{};
-    assert(uv_ip4_addr(ip.c_str(), port, &addr) == 0);
-    assert(uv_tcp_bind(&server, (const struct sockaddr*) &addr, 0) == 0);
-
-    uv_listen((uv_stream_t*) &server, DEFAULT_BACKLOG, http_server::OnConnect);
-    cout << "server started listening on port " << DEFAULT_PORT << endl;
-    uv_run(uv_loop, UV_RUN_DEFAULT);
 }

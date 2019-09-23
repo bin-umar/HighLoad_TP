@@ -9,9 +9,6 @@
 #include "Request.h"
 
 namespace http_server {
-    static uv_tcp_t server;
-    static uv_loop_t* uv_loop;
-
     void OnAlloc(uv_handle_t* client, size_t __suggested_size, uv_buf_t* __buf);
     void OnClose(uv_handle_t *__client);
     void OnRead(uv_stream_t *__client, ssize_t __n_read, const uv_buf_t *__buf);
@@ -19,7 +16,10 @@ namespace http_server {
 
     class Server {
     public:
+        std::vector<uv_thread_t*> workers;
         Server(const string&, unsigned short);
+
+        static void Worker(void* arg);
     };
 
     class HttpServer {

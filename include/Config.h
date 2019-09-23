@@ -20,6 +20,8 @@ using std::cout;
 using std::endl;
 using std::string;
 
+#define DEFAULT_PORT  8000
+#define DEFAULT_IP    "0.0.0.0"
 #define DEFAULT_BACKLOG 1024
 #define BUF_SIZE 32
 #define CRLF "\r\n"

@@ -68,28 +68,26 @@ int http_server::HttpServer::GetStatus() {
 }
 
 /************************************* Server *************************************/
-http_server::Server::Server(const string& ip, unsigned short port) {
+http_server::Server::Server(const string& __ip, unsigned short __port, const string& __d_root, unsigned short __threads) {
     struct sockaddr_in address{};
-    uv_ip4_addr(ip.c_str(), port, &address);
-    cout << "server started listening on port " << port << endl;
-    for (int i = 0; i < 1; i++) {
+    uv_ip4_addr(__ip.c_str(), __port, &address);
+    cout << "server started listening on port " << __port << endl;
+    document_root = __d_root;
+
+    for (int i = 0; i < __threads; i++) {
         auto *worker = new uv_thread_t; // (uv_thread_t*)malloc(sizeof(uv_thread_t));
         uv_thread_create(worker, Server::Worker, &address);
-        workers.push_back(worker);
-    }
-
-    for (auto worker : workers) {
         uv_thread_join(worker);
     }
 }
 
-void http_server::Server::Worker(void *arg) {
+void http_server::Server::Worker(void *__arg) {
     uv_tcp_t server;
     auto* loop = (uv_loop_t*)malloc(sizeof(uv_loop_t));  // auto* loop = new uv_loop_t;
     uv_loop_init(loop);
 
     assert(uv_tcp_init(loop, &server) == 0);
-    assert(uv_tcp_bind(&server, (const struct sockaddr*) arg, 0) == 0);
+    assert(uv_tcp_bind(&server, (const struct sockaddr*) __arg, 0) == 0);
 
     uv_listen((uv_stream_t*) &server, DEFAULT_BACKLOG, http_server::OnConnect);
     uv_run(loop, UV_RUN_DEFAULT);
@@ -117,7 +115,7 @@ void http_server::OnRead(uv_stream_t *__client, ssize_t __n_read, const uv_buf_t
         return;
     }
 
-    HttpServer http_server(__client->io_watcher.fd, "http-test-suite");
+    HttpServer http_server(__client->io_watcher.fd, document_root);
     http_server.ParseRequest(__buf->base);
     http_server.SendResponse();
 

@@ -31,10 +31,10 @@ void Request::ParseHttpQuery(char* __str) {
     http_version = http_version.substr(5);
     filename += uri;
 
-    cout << "method = " << method << endl;
+//    cout << "method = " << method << endl;
     cout << "uri = " << uri << endl;
-    cout << "filename = " << filename << endl;
-    cout << "http_version = " << http_version << endl;
+//    cout << "filename = " << filename << endl;
+//    cout << "http_version = " << http_version << endl;
 
     while(std::getline(stream, __token, '\n')) {
         if (CheckHeader(__token, "Host")) {

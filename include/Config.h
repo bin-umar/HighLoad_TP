@@ -23,7 +23,7 @@ using std::string;
 #define DEFAULT_PORT  80
 #define DEFAULT_IP    "0.0.0.0"
 #define DEFAULT_BACKLOG 1024
-#define BUF_SIZE 2056
+#define BUF_SIZE 2048 // 954824
 #define CRLF "\r\n"
 
 struct types {

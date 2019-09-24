@@ -95,7 +95,7 @@ void http_server::Server::Worker(void *__arg) {
 
 /***************************** CallBack Functions **********************************/
 void http_server::OnClose(uv_handle_t *__client) {
-    cout << __client << "connection closed" << endl;
+    cout << __client << "connection closed" << endl << endl;
     delete __client;
     __client = nullptr;
 }

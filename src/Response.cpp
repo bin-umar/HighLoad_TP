@@ -16,6 +16,8 @@ void Response::Status(int __st) {
     status = std::to_string(__st);
     phrase = status_phrase.at(__st);
 
+    cout << "Response status = " << status << " " << phrase << endl;
+
     if (__st != HTTP_STATUS_OK) {
         content_type = "text/plain";
         content = status + " " + phrase;
@@ -33,13 +35,20 @@ void Response::SendHeaders() {
 
 void Response::SendFile(const string& __filename) {
     int file = open(__filename.c_str(), O_RDONLY);
-    int sentBytes = 0, remainData = content_length;
+    int sent_bytes = 0;
+    cout << "content_length = " << content_length << endl;
+    auto remain_data = content_length;
     off_t offset = 0;
-    while ((sentBytes = sendfile(fd, file, &offset, BUF_SIZE)) > 0) {
-        remainData -= sentBytes;
+
+    while (remain_data > 0) {
+        sent_bytes = sendfile(fd, file, &offset, BUF_SIZE);
+//        cout << "remain_data = " << remain_data << " sent bytes = " << sent_bytes << endl;
+        if (sent_bytes > 0) {
+            remain_data -= sent_bytes;
+        }
     }
 
-    if (remainData != 0) {
+    if (remain_data != 0) {
         std::cerr << "File " << __filename <<  " didn't send completely" << endl;
         return;
     }

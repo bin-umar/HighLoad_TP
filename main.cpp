@@ -4,7 +4,7 @@
 
 int main() {
     Settings settings;
-    settings.ParseConfigFile("/httpd.conf");
+    settings.ParseConfigFile("etc/httpd.conf");
     new http_server::Server(DEFAULT_IP, DEFAULT_PORT, settings.document_root, settings.cpu_limit);
     return 0;
 }
